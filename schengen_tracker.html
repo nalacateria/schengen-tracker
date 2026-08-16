@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Schengen Day Tracker</title>
+<script src="schengen_data.js"></script>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -21,7 +22,6 @@ body {
   z-index: 100;
   background: #131621;
   border-bottom: 1px solid #222540;
-  padding: 14px 28px;
 }
 
 .header-inner {
@@ -29,368 +29,208 @@ body {
   margin: 0 auto;
   display: flex;
   align-items: center;
-  gap: 28px;
+  gap: 24px;
   flex-wrap: wrap;
+  padding: 14px 28px;
 }
 
-.brand {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 140px;
-}
+.brand { display: flex; flex-direction: column; gap: 2px; min-width: 130px; }
+.brand-title { font-size: 15px; font-weight: 700; color: #fff; letter-spacing: -0.3px; }
+.brand-sub { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: 0.8px; }
 
-.brand-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: #fff;
-  letter-spacing: -0.3px;
-}
+.counter-block { display: flex; flex-direction: column; gap: 2px; }
+.counter-row { display: flex; align-items: baseline; gap: 6px; }
+.count-num { font-size: 38px; font-weight: 800; line-height: 1; transition: color 0.3s; }
+.count-denom { font-size: 20px; color: #555; font-weight: 500; }
+.count-label { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: 0.6px; }
 
-.brand-sub {
-  font-size: 10px;
-  color: #555;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-}
+.badge { padding: 5px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; white-space: nowrap; transition: background 0.3s, color 0.3s; }
 
-.counter-block {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
+.progress-block { flex: 1; min-width: 160px; }
+.progress-bg { height: 10px; background: #1e2235; border-radius: 5px; overflow: hidden; margin-bottom: 5px; }
+.progress-fill { height: 100%; border-radius: 5px; transition: width 0.4s ease, background 0.3s; }
+.progress-labels { display: flex; justify-content: space-between; font-size: 10px; color: #444; }
 
-.counter-row {
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-}
+.window-block { display: flex; flex-direction: column; gap: 4px; }
+.window-label { font-size: 10px; color: #444; text-transform: uppercase; letter-spacing: 0.6px; }
+.window-dates { font-size: 12px; color: #888; }
+.window-expiry { font-size: 11px; color: #fb923c; margin-top: 2px; }
 
-.count-num {
-  font-size: 38px;
-  font-weight: 800;
-  line-height: 1;
-  transition: color 0.3s;
-}
+.legend { display: flex; flex-direction: column; gap: 4px; }
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #666; }
+.legend-swatch { width: 13px; height: 13px; border-radius: 3px; flex-shrink: 0; }
 
-.count-denom {
-  font-size: 20px;
-  color: #555;
-  font-weight: 500;
+/* Sync button area */
+.sync-area { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; margin-left: auto; }
+.sync-btn {
+  display: flex; align-items: center; gap: 7px;
+  background: #1e2235; border: 1px solid #2d3358; color: #aaa;
+  padding: 7px 14px; border-radius: 6px; font-size: 12px; font-weight: 600;
+  cursor: pointer; white-space: nowrap; transition: background 0.2s, color 0.2s;
 }
-
-.count-label {
-  font-size: 10px;
-  color: #555;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
+.sync-btn:hover { background: #252a45; color: #ddd; }
+.sync-btn.has-changes { border-color: #fb923c55; color: #fb923c; }
+.sync-btn svg { width: 13px; height: 13px; flex-shrink: 0; }
+.pending-badge {
+  background: #fb923c; color: #0d0f1a; border-radius: 10px;
+  font-size: 10px; font-weight: 700; padding: 1px 6px;
 }
-
-.badge {
-  padding: 5px 12px;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 700;
-  white-space: nowrap;
-  transition: background 0.3s, color 0.3s;
-}
-
-.progress-block {
-  flex: 1;
-  min-width: 180px;
-}
-
-.progress-bg {
-  height: 10px;
-  background: #1e2235;
-  border-radius: 5px;
-  overflow: hidden;
-  margin-bottom: 5px;
-}
-
-.progress-fill {
-  height: 100%;
-  border-radius: 5px;
-  transition: width 0.4s ease, background 0.3s;
-}
-
-.progress-labels {
-  display: flex;
-  justify-content: space-between;
-  font-size: 10px;
-  color: #444;
-}
-
-.window-block {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 200px;
-}
-
-.window-label {
-  font-size: 10px;
-  color: #444;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-}
-
-.window-dates {
-  font-size: 12px;
-  color: #888;
-}
-
-.legend {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  color: #666;
-  cursor: default;
-}
-
-.legend-swatch {
-  width: 14px;
-  height: 14px;
-  border-radius: 3px;
-  flex-shrink: 0;
-}
+.sync-hint { font-size: 10px; color: #3a3f58; text-align: right; }
 
 /* color states */
 .safe   { color: #4ade80; }
 .warn   { color: #fb923c; }
 .danger { color: #f87171; }
-
 .bg-safe   { background: #4ade80; }
 .bg-warn   { background: #fb923c; }
 .bg-danger { background: #f87171; }
-
-.badge-safe   { background: rgba(74,222,128,0.12); color: #4ade80; }
-.badge-warn   { background: rgba(251,146,60,0.12);  color: #fb923c; }
-.badge-danger { background: rgba(248,113,113,0.12); color: #f87171; }
-
-/* ── CALENDAR ── */
-.calendar-wrapper {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 24px 28px;
-}
-
-.year-section {
-  margin-bottom: 36px;
-}
-
-.year-label {
-  font-size: 11px;
-  font-weight: 700;
-  color: #333;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  margin-bottom: 14px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #1a1d2e;
-}
-
-.months-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px;
-}
-
-.month-card {
-  background: #161929;
-  border-radius: 10px;
-  padding: 12px 10px 10px;
-  border: 1px solid #1e2235;
-  width: 192px;
-}
-
-.month-title {
-  font-size: 12px;
-  font-weight: 600;
-  color: #bbb;
-  text-align: center;
-  margin-bottom: 8px;
-  letter-spacing: 0.2px;
-}
-
-.dow-row {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  margin-bottom: 3px;
-}
-
-.dow-cell {
-  font-size: 8px;
-  color: #383c55;
-  text-align: center;
-  padding: 1px 0;
-}
-
-.days-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
-}
-
-.day {
-  aspect-ratio: 1;
-  border-radius: 3px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 8.5px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: transform 0.08s, opacity 0.1s;
-  user-select: none;
-  position: relative;
-}
-
-.day:hover { transform: scale(1.2); z-index: 10; }
-.day.empty { background: transparent !important; cursor: default; pointer-events: none; }
-
-.day.schengen         { background: #4ade80; color: #071a0d; }
-.day.outside          { background: #1c1f36; color: #2e3356; }
-.day.future-schengen  { background: rgba(74,222,128,0.22); color: rgba(74,222,128,0.65); }
-.day.future-outside   { background: #141626; color: #23273d; }
-
-.day.today {
-  outline: 2px solid #818cf8;
-  outline-offset: 1px;
-  z-index: 5;
-}
-
-/* Highlight in-window days with subtle ring */
-.day.in-window.outside { background: #1e2240; color: #353b60; }
-
-.month-footer {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 6px;
-  min-height: 14px;
-}
-
-.month-count {
-  font-size: 10px;
-  font-weight: 600;
-  color: #4ade80;
-}
-
-/* Tooltip */
-.tooltip {
-  position: fixed;
-  background: #0d0f1a;
-  border: 1px solid #2d3154;
-  color: #ccc;
-  font-size: 11px;
-  padding: 5px 10px;
-  border-radius: 6px;
-  pointer-events: none;
-  z-index: 9999;
-  white-space: nowrap;
-  opacity: 0;
-  transition: opacity 0.1s;
-}
+.badge-safe   { background: rgba(74,222,128,0.12);  color: #4ade80; }
+.badge-warn   { background: rgba(251,146,60,0.12);   color: #fb923c; }
+.badge-danger { background: rgba(248,113,113,0.12);  color: #f87171; }
 
 /* ── PROJECTION BAR ── */
 .proj-bar {
   background: #111425;
-  border-top: 1px solid #252840;
+  border-top: 1px solid #1e2235;
   padding: 10px 28px;
 }
-
 .proj-inner {
-  max-width: 1280px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex-wrap: wrap;
+  max-width: 1280px; margin: 0 auto;
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
 }
-
-.proj-label {
-  font-size: 10px;
-  color: #555;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-}
-
-.proj-date {
-  font-size: 14px;
-  font-weight: 700;
-  color: #fbbf24;
-}
-
-.proj-count-group {
-  display: flex;
-  align-items: baseline;
-  gap: 4px;
-}
-
-.proj-count {
-  font-size: 22px;
-  font-weight: 800;
-  line-height: 1;
-}
-
-.proj-denom {
-  font-size: 14px;
-  color: #555;
-}
-
-.proj-badge {
-  padding: 3px 10px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.proj-window-text {
-  font-size: 11px;
-  color: #555;
-  flex: 1;
-}
-
-.proj-hint {
-  font-size: 10px;
-  color: #333;
-  font-style: italic;
-}
-
+.proj-label { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: 0.8px; }
+.proj-date { font-size: 14px; font-weight: 700; color: #fbbf24; }
+.proj-count-group { display: flex; align-items: baseline; gap: 4px; }
+.proj-count { font-size: 22px; font-weight: 800; line-height: 1; }
+.proj-denom { font-size: 14px; color: #555; }
+.proj-badge { padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+.proj-window-text { font-size: 11px; color: #555; flex: 1; }
+.proj-hint { font-size: 10px; color: #333; font-style: italic; }
 .proj-close {
-  background: none;
-  border: 1px solid #2d3154;
-  color: #555;
-  border-radius: 4px;
-  width: 22px;
-  height: 22px;
-  cursor: pointer;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: auto;
+  background: none; border: 1px solid #252840; color: #555; border-radius: 4px;
+  width: 22px; height: 22px; cursor: pointer; font-size: 14px; line-height: 1;
+  display: flex; align-items: center; justify-content: center; margin-left: auto;
   transition: color 0.15s, border-color 0.15s;
 }
 .proj-close:hover { color: #aaa; border-color: #555; }
 
-/* Selected day ring */
-.day.selected {
-  outline: 2px solid #fbbf24;
-  outline-offset: 2px;
-  z-index: 6;
+/* ── CALENDAR ── */
+.calendar-wrapper { max-width: 1280px; margin: 0 auto; padding: 20px 28px; }
+
+.data-warning {
+  background: rgba(251,146,60,0.1); border: 1px solid rgba(251,146,60,0.3);
+  border-radius: 8px; padding: 12px 16px; margin-bottom: 20px; font-size: 13px; color: #fb923c;
 }
+
+.history-btn {
+  background: #161929; border: 1px solid #1e2235; color: #555;
+  padding: 8px 16px; border-radius: 6px; font-size: 12px; cursor: pointer;
+  margin-bottom: 16px; display: block; width: 100%; text-align: left;
+  transition: color 0.15s, border-color 0.15s;
+}
+.history-btn:hover { color: #888; border-color: #2d3154; }
+
+.year-section { margin-bottom: 32px; }
+.year-label {
+  font-size: 11px; font-weight: 700; color: #333; text-transform: uppercase;
+  letter-spacing: 2px; margin-bottom: 12px; padding-bottom: 8px;
+  border-bottom: 1px solid #1a1d2e;
+}
+.months-row { display: flex; flex-wrap: wrap; gap: 14px; }
+
+.month-card {
+  background: #161929; border-radius: 10px; padding: 12px 10px 10px;
+  border: 1px solid #1e2235; width: 192px;
+}
+.month-title { font-size: 12px; font-weight: 600; color: #bbb; text-align: center; margin-bottom: 8px; }
+.dow-row { display: grid; grid-template-columns: repeat(7, 1fr); margin-bottom: 3px; }
+.dow-cell { font-size: 8px; color: #383c55; text-align: center; padding: 1px 0; }
+.days-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+
+.day {
+  aspect-ratio: 1; border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 8.5px; font-weight: 500; cursor: pointer;
+  transition: transform 0.08s; user-select: none; position: relative;
+}
+.day:hover:not(.empty) { transform: scale(1.2); z-index: 10; }
+.day.empty { background: transparent !important; cursor: default; pointer-events: none; }
+
+.day.schengen        { background: #4ade80; color: #071a0d; }
+.day.outside         { background: #1c1f36; color: #2e3356; }
+.day.in-window       { background: #1e2240; color: #353b60; }
+.day.future-schengen { background: rgba(74,222,128,0.22); color: rgba(74,222,128,0.65); }
+.day.future-outside  { background: #141626; color: #23273d; }
+.day.today           { outline: 2px solid #818cf8; outline-offset: 1px; z-index: 5; }
+.day.selected        { outline: 2px solid #fbbf24; outline-offset: 2px; z-index: 6; }
+
+/* Expiry dot */
+.day.next-expiry::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: #fb923c;
+  pointer-events: none;
+}
+
+.month-footer { display: flex; justify-content: flex-end; margin-top: 6px; min-height: 14px; }
+.month-count { font-size: 10px; font-weight: 600; color: #4ade80; }
+
+/* ── TOOLTIP ── */
+.tooltip {
+  position: fixed; background: #0d0f1a; border: 1px solid #2d3154; color: #ccc;
+  font-size: 11px; padding: 5px 10px; border-radius: 6px; pointer-events: none;
+  z-index: 9999; white-space: nowrap; opacity: 0; transition: opacity 0.1s;
+}
+
+/* ── MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000;
+  display: none; align-items: center; justify-content: center;
+}
+.modal-overlay.visible { display: flex; }
+.modal-box {
+  background: #1a1d2e; border: 1px solid #252840; border-radius: 12px;
+  padding: 28px 32px; width: 420px; max-width: 90vw;
+}
+.modal-title { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+.modal-sub { font-size: 13px; color: #777; margin-bottom: 16px; line-height: 1.5; }
+.modal-sub a { color: #818cf8; text-decoration: none; }
+.modal-sub a:hover { text-decoration: underline; }
+.modal-input {
+  width: 100%; background: #0d0f1a; border: 1px solid #2d3154; color: #ddd;
+  padding: 10px 14px; border-radius: 6px; font-size: 13px; font-family: monospace;
+  margin-bottom: 16px;
+}
+.modal-input:focus { outline: none; border-color: #818cf8; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.modal-btn {
+  padding: 8px 18px; border-radius: 6px; font-size: 13px; font-weight: 600;
+  cursor: pointer; border: none; transition: opacity 0.15s;
+}
+.modal-btn:hover { opacity: 0.85; }
+.modal-btn.secondary { background: #252840; color: #888; }
+.modal-btn.primary { background: #4ade80; color: #071a0d; }
+.modal-btn.danger { background: #f87171; color: #fff; }
+
+/* Sync status modal */
+.sync-status-content { text-align: center; padding: 8px 0; }
+.sync-icon { font-size: 40px; margin-bottom: 12px; }
+.sync-message { font-size: 15px; color: #ddd; margin-bottom: 8px; font-weight: 600; }
+.sync-sub { font-size: 13px; color: #777; margin-bottom: 20px; line-height: 1.5; }
+.sync-sub a { color: #4ade80; text-decoration: none; }
+.sync-sub a:hover { text-decoration: underline; }
+.spinner { display: inline-block; width: 36px; height: 36px; border: 3px solid #252840; border-top-color: #4ade80; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px; }
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
 
+<!-- STICKY HEADER -->
 <div class="sticky-header">
   <div class="header-inner">
     <div class="brand">
@@ -423,27 +263,38 @@ body {
     <div class="window-block">
       <div class="window-label">Rolling window</div>
       <div class="window-dates" id="window-dates">…</div>
+      <div class="window-expiry" id="window-expiry" style="display:none">…</div>
     </div>
 
     <div class="legend">
       <div class="legend-item">
-        <div class="legend-swatch" style="background:#4ade80"></div>
-        In Schengen
+        <div class="legend-swatch" style="background:#4ade80"></div>In Schengen
       </div>
       <div class="legend-item">
-        <div class="legend-swatch" style="background:#1c1f36"></div>
-        Outside Schengen
+        <div class="legend-swatch" style="background:#1e2240"></div>Outside (in window)
       </div>
       <div class="legend-item">
-        <div class="legend-swatch" style="background:transparent; outline:2px solid #818cf8; outline-offset:1px;"></div>
-        Today
+        <div class="legend-swatch" style="background:transparent; outline:2px solid #818cf8; outline-offset:1px;"></div>Today
       </div>
-      <div class="legend-item" style="color:#444; font-size:10px; margin-top:2px">
+      <div class="legend-item" style="font-size:10px; color:#444; margin-top:2px">
         Click: inspect · Double-click: toggle
       </div>
     </div>
+
+    <div class="sync-area">
+      <button class="sync-btn" id="sync-btn" onclick="openSyncFlow()">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M13.5 8A5.5 5.5 0 1 1 8 2.5" stroke-linecap="round"/>
+          <path d="M8 1l2.5 2L8 5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Sync to GitHub
+        <span class="pending-badge" id="pending-badge" style="display:none">0</span>
+      </button>
+      <div class="sync-hint" id="sync-hint">↑ creates a PR to update schengen_data.js</div>
+    </div>
   </div>
-  <!-- Projection bar (hidden until a day is clicked) -->
+
+  <!-- Projection bar -->
   <div class="proj-bar" id="proj-bar" style="display:none">
     <div class="proj-inner">
       <div class="proj-label">As of</div>
@@ -460,97 +311,90 @@ body {
   </div>
 </div>
 
-<div class="calendar-wrapper" id="cal-root"></div>
+<!-- CALENDAR -->
+<div class="calendar-wrapper">
+  <div class="data-warning" id="data-warning" style="display:none">
+    ⚠ Could not load <code>schengen_data.js</code>. Make sure it's in the same folder as this HTML file.
+  </div>
+  <div id="cal-root"></div>
+</div>
+
+<!-- TOOLTIP -->
 <div class="tooltip" id="tooltip"></div>
+
+<!-- TOKEN MODAL -->
+<div class="modal-overlay" id="token-modal">
+  <div class="modal-box">
+    <div class="modal-title">GitHub Token</div>
+    <div class="modal-sub">
+      Enter a Personal Access Token with <strong>repo</strong> scope.<br>
+      Create one at <a href="https://github.com/settings/tokens" target="_blank">github.com/settings/tokens</a>.
+      Stored only in your browser's localStorage.
+    </div>
+    <input type="password" class="modal-input" id="token-input" placeholder="ghp_...">
+    <div class="modal-actions">
+      <button class="modal-btn secondary" onclick="closeModal('token-modal')">Cancel</button>
+      <button class="modal-btn danger" id="clear-token-btn" onclick="clearToken()" style="display:none">Clear token</button>
+      <button class="modal-btn primary" onclick="saveTokenAndSync()">Save & Sync</button>
+    </div>
+  </div>
+</div>
+
+<!-- SYNC STATUS MODAL -->
+<div class="modal-overlay" id="sync-modal">
+  <div class="modal-box">
+    <div class="sync-status-content" id="sync-content">
+      <div class="spinner"></div>
+      <div class="sync-message">Creating PR…</div>
+      <div class="sync-sub">Pushing changes to GitHub.</div>
+    </div>
+    <div class="modal-actions" id="sync-actions" style="display:none">
+      <button class="modal-btn secondary" onclick="closeModal('sync-modal')">Close</button>
+      <button class="modal-btn primary" id="clear-overrides-btn" onclick="clearOverrides()" style="display:none">
+        Clear local overrides
+      </button>
+    </div>
+  </div>
+</div>
 
 <script>
 // ═══════════════════════════════════════════════════
-// DATA
+// CONFIGURATION
 // ═══════════════════════════════════════════════════
 
-function dr(s, e) { // dateRange → array of YYYY-MM-DD strings
+const GITHUB_OWNER = 'nalacateria';
+const GITHUB_REPO  = 'schengen-tracker';
+const GITHUB_FILE  = 'schengen_data.js';
+
+// ═══════════════════════════════════════════════════
+// DATA LOADING
+// ═══════════════════════════════════════════════════
+
+function dr(s, e) {
   const out = [];
   const d = new Date(s + 'T12:00:00Z');
   const end = new Date(e + 'T12:00:00Z');
   for (; d <= end; d.setUTCDate(d.getUTCDate() + 1))
-    out.push(d.toISOString().slice(0,10));
+    out.push(d.toISOString().slice(0, 10));
   return out;
 }
 
-const DEFAULT_SCHENGEN = new Set([
-  // ── 2022 ──────────────────────────────────────────
-  ...dr('2022-12-28','2022-12-31'),          // Dec: 4d
+if (!window.SCHENGEN_DATA) {
+  document.getElementById('data-warning').style.display = '';
+}
 
-  // ── 2023 ──────────────────────────────────────────
-  ...dr('2023-01-01','2023-01-23'),          // Jan: 23d Iceland
-  ...dr('2023-02-01','2023-02-17'),          // Feb: 17d
-  ...dr('2023-03-16','2023-03-31'),          // Mar: 16d
-  '2023-04-01','2023-04-02',                 // Apr: 17d (1-2, 16-30)
-  ...dr('2023-04-16','2023-04-30'),
-  ...dr('2023-05-28','2023-05-31'),          // May: 4d
-  ...dr('2023-06-01','2023-06-06'),          // Jun: 6d
-  ...dr('2023-07-01','2023-07-28'),          // Jul: 28d France/Iceland
-  ...dr('2023-08-01','2023-08-17'),          // Aug: 24d (1-17, 20-26)
-  ...dr('2023-08-20','2023-08-26'),
-  ...dr('2023-09-15','2023-09-30'),          // Sep: 16d Berlin/Iceland
-  ...dr('2023-10-01','2023-10-28'),          // Oct: 28d Iceland
-  // Nov: 0
-  ...dr('2023-12-10','2023-12-15'),          // Dec: 9d (10-15, 29-31)
-  ...dr('2023-12-29','2023-12-31'),
+const rawRanges = window.SCHENGEN_DATA?.ranges || [];
+const DEFAULT_SCHENGEN = new Set();
+for (const r of rawRanges) {
+  for (const d of dr(r.start, r.end)) DEFAULT_SCHENGEN.add(d);
+}
 
-  // ── 2024 ──────────────────────────────────────────
-  ...dr('2024-01-01','2024-01-14'),          // Jan: 25d (1-14, 21-31)
-  ...dr('2024-01-21','2024-01-31'),
-  ...dr('2024-02-01','2024-02-10'),          // Feb: 10d
-  // Mar, Apr: 0
-  ...dr('2024-05-27','2024-05-31'),          // May: 5d
-  ...dr('2024-06-28','2024-06-30'),          // Jun: 3d Iceland/Greenland
-  ...dr('2024-07-01','2024-07-31'),          // Jul: 31d Iceland/Greenland/Brussels/Germany
-  ...dr('2024-08-01','2024-08-03'),          // Aug: 3d
-  ...dr('2024-09-02','2024-09-14'),          // Sep: 21d (2-14, 23-30)
-  ...dr('2024-09-23','2024-09-30'),
-  ...dr('2024-10-01','2024-10-06'),          // Oct: 6d Oslo
-  // Nov, Dec: 0
-
-  // ── 2025 ──────────────────────────────────────────
-  ...dr('2025-01-05','2025-01-31'),          // Jan: 27d Iceland
-  ...dr('2025-02-01','2025-02-23'),          // Feb: 23d Iceland
-  // Mar, Apr: 0
-  ...dr('2025-05-02','2025-05-09'),          // May: 8d
-  ...dr('2025-06-10','2025-06-30'),          // Jun: 21d Iceland
-  ...dr('2025-07-01','2025-07-31'),          // Jul: 31d Iceland
-  ...dr('2025-08-01','2025-08-25'),          // Aug: 25d Iceland
-  ...dr('2025-09-01','2025-09-26'),          // Sep: 26d Germany/Oslo
-  ...dr('2025-10-01','2025-10-04'),          // Oct: 4d Oslo
-  // Nov: 0
-  ...dr('2025-12-11','2025-12-20'),          // Dec: 10d Iceland
-
-  // ── 2026 ──────────────────────────────────────────
-  ...dr('2026-01-22','2026-01-31'),          // Jan: 10d Iceland
-  ...dr('2026-02-01','2026-02-15'),          // Feb: 15d Iceland
-  // Mar: 0
-  ...dr('2026-04-23','2026-04-30'),          // Apr: 8d Iceland
-  ...dr('2026-05-01','2026-05-22'),          // May: 22d Iceland
-  ...dr('2026-06-23','2026-06-30'),          // Jun: 8d Italy/Iceland
-  ...dr('2026-07-01','2026-07-05'),          // Jul: 22d Iceland/Chamonix (1-5, 11-27)
-  ...dr('2026-07-11','2026-07-27'),
-  ...dr('2026-08-11','2026-08-17'),          // Aug: 7d Iceland
-]);
-
-// ── User overrides (persisted) ──
 let overrides = {};
 try { overrides = JSON.parse(localStorage.getItem('schengen_overrides') || '{}'); } catch(e) {}
 
 const schengen = new Set(DEFAULT_SCHENGEN);
 for (const [d, v] of Object.entries(overrides)) {
   v ? schengen.add(d) : schengen.delete(d);
-}
-
-function toggle(dateStr) {
-  const was = schengen.has(dateStr);
-  was ? schengen.delete(dateStr) : schengen.add(dateStr);
-  overrides[dateStr] = !was;
-  try { localStorage.setItem('schengen_overrides', JSON.stringify(overrides)); } catch(e) {}
 }
 
 // ═══════════════════════════════════════════════════
@@ -565,114 +409,148 @@ function todayStr() {
 function addDays(dateStr, n) {
   const d = new Date(dateStr + 'T12:00:00Z');
   d.setUTCDate(d.getUTCDate() + n);
-  return d.toISOString().slice(0,10);
+  return d.toISOString().slice(0, 10);
 }
 
-function windowStart() {
-  return addDays(todayStr(), -179); // 180 days incl today
-}
-
-function countInWindow() {
-  const today = todayStr();
-  const ws = windowStart();
-  let n = 0;
-  const d = new Date(ws + 'T12:00:00Z');
-  const end = new Date(today + 'T12:00:00Z');
-  for (; d <= end; d.setUTCDate(d.getUTCDate()+1))
-    if (schengen.has(d.toISOString().slice(0,10))) n++;
-  return n;
-}
+function windowStartFor(dateStr) { return addDays(dateStr, -179); }
 
 function countAsOf(dateStr) {
-  // Count Schengen days in the 180-day window ending on dateStr
-  const ws = addDays(dateStr, -179);
+  const ws = windowStartFor(dateStr);
   let n = 0;
   const d = new Date(ws + 'T12:00:00Z');
   const end = new Date(dateStr + 'T12:00:00Z');
-  for (; d <= end; d.setUTCDate(d.getUTCDate()+1))
-    if (schengen.has(d.toISOString().slice(0,10))) n++;
+  for (; d <= end; d.setUTCDate(d.getUTCDate() + 1))
+    if (schengen.has(d.toISOString().slice(0, 10))) n++;
   return { count: n, ws };
 }
 
 function fmtDate(s) {
-  const [y,m,d] = s.split('-');
-  return new Date(s+'T12:00:00Z').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'});
+  return new Date(s + 'T12:00:00Z').toLocaleDateString('en-US',
+    { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+}
+
+function datesToRanges(datesArr) {
+  const sorted = [...datesArr].sort();
+  if (!sorted.length) return [];
+  const ranges = [];
+  let start = sorted[0], prev = sorted[0];
+  for (let i = 1; i < sorted.length; i++) {
+    if (sorted[i] === addDays(prev, 1)) { prev = sorted[i]; }
+    else { ranges.push({ start, end: prev }); start = sorted[i]; prev = sorted[i]; }
+  }
+  ranges.push({ start, end: prev });
+  return ranges;
+}
+
+// Next future day where a past Schengen day exits the 180-day window
+// A Schengen day S expires on day S+180 (first day it's no longer in window)
+function findNextExpiry() {
+  const today = todayStr();
+  let next = null;
+  for (const s of schengen) {
+    if (s > today) continue;
+    const expiry = addDays(s, 180);
+    if (expiry > today && (!next || expiry < next)) next = expiry;
+  }
+  return next;
 }
 
 // ═══════════════════════════════════════════════════
-// RENDER
+// TOGGLE
 // ═══════════════════════════════════════════════════
 
-const DOW = ['S','M','T','W','T','F','S'];
-const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+function toggle(dateStr) {
+  const was = schengen.has(dateStr);
+  was ? schengen.delete(dateStr) : schengen.add(dateStr);
+  overrides[dateStr] = !was;
+  try { localStorage.setItem('schengen_overrides', JSON.stringify(overrides)); } catch(e) {}
+}
 
-function daysInMonth(y, m) { return new Date(y, m+1, 0).getDate(); }
+// ═══════════════════════════════════════════════════
+// RENDER CALENDAR
+// ═══════════════════════════════════════════════════
+
+const DOW    = ['S','M','T','W','T','F','S'];
+const MONTHS = ['January','February','March','April','May','June',
+                'July','August','September','October','November','December'];
+
+function daysInMonth(y, m) { return new Date(y, m + 1, 0).getDate(); }
 function firstDOW(y, m)    { return new Date(y, m, 1).getDay(); }
+
+let selectedDate = null;
 
 function buildCalendar() {
   const root = document.getElementById('cal-root');
   const today = todayStr();
-  const ws = windowStart();
+  const ws = windowStartFor(today);
+  const nextExpiry = findNextExpiry();
 
-  const YEAR_RANGES = [
-    [2022, 11, 11],  // year, startMonth, endMonth
-    [2023, 0, 11],
-    [2024, 0, 11],
-    [2025, 0, 11],
-    [2026, 0, 11],
-  ];
+  // History section (2022–2024)
+  const historyWrap = document.createElement('div');
+  historyWrap.id = 'history-wrap';
+  historyWrap.style.display = 'none';
 
-  for (const [year, mStart, mEnd] of YEAR_RANGES) {
-    const section = document.createElement('div');
-    section.className = 'year-section';
-    section.innerHTML = `<div class="year-label">${year}</div>`;
+  [[2022,11,11],[2023,0,11],[2024,0,11]].forEach(([y, ms, me]) => {
+    historyWrap.appendChild(buildYearSection(y, ms, me, today, ws, nextExpiry));
+  });
 
-    const row = document.createElement('div');
-    row.className = 'months-row';
+  const histBtn = document.createElement('button');
+  histBtn.className = 'history-btn';
+  histBtn.id = 'history-btn';
+  histBtn.textContent = '▶  Show earlier history (Dec 2022 – Dec 2024)';
+  histBtn.addEventListener('click', () => {
+    const hidden = historyWrap.style.display === 'none';
+    historyWrap.style.display = hidden ? '' : 'none';
+    histBtn.textContent = hidden
+      ? '▼  Hide earlier history (Dec 2022 – Dec 2024)'
+      : '▶  Show earlier history (Dec 2022 – Dec 2024)';
+  });
 
-    for (let m = mStart; m <= mEnd; m++) {
-      row.appendChild(buildMonth(year, m, today, ws));
-    }
+  root.appendChild(histBtn);
+  root.appendChild(historyWrap);
 
-    section.appendChild(row);
-    root.appendChild(section);
-  }
+  // Recent years (2025–2026)
+  [[2025,0,11],[2026,0,11]].forEach(([y, ms, me]) => {
+    root.appendChild(buildYearSection(y, ms, me, today, ws, nextExpiry));
+  });
 }
 
-function buildMonth(year, month, today, ws) {
+function buildYearSection(year, mStart, mEnd, today, ws, nextExpiry) {
+  const section = document.createElement('div');
+  section.className = 'year-section';
+  const label = document.createElement('div');
+  label.className = 'year-label';
+  label.textContent = year;
+  section.appendChild(label);
+  const row = document.createElement('div');
+  row.className = 'months-row';
+  for (let m = mStart; m <= mEnd; m++) row.appendChild(buildMonth(year, m, today, ws, nextExpiry));
+  section.appendChild(row);
+  return section;
+}
+
+function buildMonth(year, month, today, ws, nextExpiry) {
   const card = document.createElement('div');
   card.className = 'month-card';
-  card.dataset.ym = `${year}-${month}`;
 
-  // Header
   const title = document.createElement('div');
   title.className = 'month-title';
   title.textContent = `${MONTHS[month]} ${year}`;
   card.appendChild(title);
 
-  // DOW labels
   const dowRow = document.createElement('div');
   dowRow.className = 'dow-row';
-  DOW.forEach(l => {
-    const c = document.createElement('div');
-    c.className = 'dow-cell';
-    c.textContent = l;
-    dowRow.appendChild(c);
-  });
+  DOW.forEach(l => { const c = document.createElement('div'); c.className='dow-cell'; c.textContent=l; dowRow.appendChild(c); });
   card.appendChild(dowRow);
 
-  // Days grid
   const grid = document.createElement('div');
   grid.className = 'days-grid';
 
   const dim = daysInMonth(year, month);
-  const fd = firstDOW(year, month);
+  const fd  = firstDOW(year, month);
 
-  // empty cells
   for (let i = 0; i < fd; i++) {
-    const empty = document.createElement('div');
-    empty.className = 'day empty';
-    grid.appendChild(empty);
+    const e = document.createElement('div'); e.className = 'day empty'; grid.appendChild(e);
   }
 
   for (let d = 1; d <= dim; d++) {
@@ -681,18 +559,23 @@ function buildMonth(year, month, today, ws) {
     cell.className = 'day';
     cell.dataset.date = ds;
     cell.textContent = d;
-    applyCellClass(cell, ds, today, ws);
+    applyCellClass(cell, ds, today, ws, nextExpiry);
 
-    cell.addEventListener('click', () => {
-      showProjection(ds);
-    });
+    cell.addEventListener('click', () => showProjection(ds));
 
     cell.addEventListener('dblclick', () => {
       toggle(ds);
-      applyCellClass(cell, ds, today, ws);
+      const ne = findNextExpiry();
+      // Refresh expiry dots
+      document.querySelectorAll('.day.next-expiry').forEach(c => c.classList.remove('next-expiry'));
+      if (ne) {
+        const nc = document.querySelector(`.day[data-date="${ne}"]`);
+        if (nc) nc.classList.add('next-expiry');
+      }
+      applyCellClass(cell, ds, today, ws, ne);
       updateMonthCount(cell.closest('.month-card'));
       updateHeader();
-      // Refresh projection if this day is currently selected
+      updateSyncIndicator();
       if (selectedDate === ds) showProjection(ds);
     });
 
@@ -704,7 +587,6 @@ function buildMonth(year, month, today, ws) {
   }
   card.appendChild(grid);
 
-  // Footer with monthly count
   const footer = document.createElement('div');
   footer.className = 'month-footer';
   const mc = document.createElement('div');
@@ -712,21 +594,23 @@ function buildMonth(year, month, today, ws) {
   footer.appendChild(mc);
   card.appendChild(footer);
   updateMonthCount(card);
-
   return card;
 }
 
-function applyCellClass(cell, ds, today, ws) {
+function applyCellClass(cell, ds, today, ws, nextExpiry) {
   const isFuture = ds > today;
-  const inW = ds >= ws && ds <= today;
   const inS = schengen.has(ds);
-
   let cls = 'day';
-  if (isFuture) cls += inS ? ' future-schengen' : ' future-outside';
-  else if (inS) cls += ' schengen';
-  else cls += ' outside' + (inW ? ' in-window' : '');
+  if (isFuture) {
+    cls += inS ? ' future-schengen' : ' future-outside';
+  } else if (inS) {
+    cls += ' schengen';
+  } else {
+    cls += ds >= ws ? ' outside in-window' : ' outside';
+  }
   if (ds === today) cls += ' today';
-
+  if (ds === selectedDate) cls += ' selected';
+  if (ds === nextExpiry) cls += ' next-expiry';
   cell.className = cls;
 }
 
@@ -735,7 +619,7 @@ function updateMonthCount(card) {
   let n = 0;
   cells.forEach(c => { if (schengen.has(c.dataset.date)) n++; });
   const mc = card.querySelector('.month-count');
-  mc.textContent = n > 0 ? `${n}d in Schengen` : '';
+  if (mc) mc.textContent = n > 0 ? `${n}d in Schengen` : '';
 }
 
 // ═══════════════════════════════════════════════════
@@ -743,40 +627,56 @@ function updateMonthCount(card) {
 // ═══════════════════════════════════════════════════
 
 function updateHeader() {
-  const used = countInWindow();
+  const today = todayStr();
+  const { count: used, ws } = countAsOf(today);
   const rem = 90 - used;
-  const pct = Math.min(100, (used/90)*100);
+  const pct = Math.min(100, (used / 90) * 100);
   const level = used >= 90 ? 'danger' : used >= 72 ? 'warn' : 'safe';
 
   document.getElementById('count-num').textContent = used;
   document.getElementById('count-num').className = `count-num ${level}`;
-
-  document.getElementById('badge').textContent = rem >= 0 ? `${rem} remaining` : `${Math.abs(rem)} over limit!`;
+  document.getElementById('badge').textContent = rem >= 0 ? `${rem} remaining` : `${Math.abs(rem)} over!`;
   document.getElementById('badge').className = `badge badge-${level}`;
-
   document.getElementById('progress').style.width = pct + '%';
   document.getElementById('progress').className = `progress-fill bg-${level}`;
-
-  document.getElementById('progress-text').textContent = `${used} / 90 days`;
-
-  const today = todayStr();
-  const ws = windowStart();
+  document.getElementById('progress-text').textContent = `${used} / 90`;
   document.getElementById('window-dates').textContent = `${fmtDate(ws)} → ${fmtDate(today)}`;
+
+  const nextExpiry = findNextExpiry();
+  const expiryEl = document.getElementById('window-expiry');
+  if (nextExpiry) {
+    const expiringDay = addDays(nextExpiry, -180);
+    expiryEl.textContent = `⬥ Next −1: ${fmtDate(nextExpiry)}`;
+    expiryEl.title = `${fmtDate(expiringDay)} exits the window on this date`;
+    expiryEl.style.display = '';
+  } else {
+    expiryEl.style.display = 'none';
+  }
+}
+
+function updateSyncIndicator() {
+  const n = Object.keys(overrides).length;
+  const btn = document.getElementById('sync-btn');
+  const badge = document.getElementById('pending-badge');
+  if (n > 0) {
+    badge.textContent = n;
+    badge.style.display = '';
+    btn.classList.add('has-changes');
+  } else {
+    badge.style.display = 'none';
+    btn.classList.remove('has-changes');
+  }
 }
 
 // ═══════════════════════════════════════════════════
 // PROJECTION
 // ═══════════════════════════════════════════════════
 
-let selectedDate = null;
-
 function showProjection(ds) {
-  // Deselect previous
   if (selectedDate) {
     const prev = document.querySelector(`.day[data-date="${selectedDate}"]`);
     if (prev) prev.classList.remove('selected');
   }
-
   selectedDate = ds;
   const cell = document.querySelector(`.day[data-date="${ds}"]`);
   if (cell) cell.classList.add('selected');
@@ -785,10 +685,9 @@ function showProjection(ds) {
   const rem = 90 - count;
   const level = count >= 90 ? 'danger' : count >= 72 ? 'warn' : 'safe';
   const today = todayStr();
-  const isFuture = ds > today;
 
   document.getElementById('proj-bar').style.display = '';
-  document.getElementById('proj-date').textContent = fmtDate(ds) + (isFuture ? ' (future)' : '');
+  document.getElementById('proj-date').textContent = fmtDate(ds) + (ds > today ? ' (future)' : '');
   document.getElementById('proj-count').textContent = count;
   document.getElementById('proj-count').className = `proj-count ${level}`;
   document.getElementById('proj-badge').textContent = rem >= 0 ? `${rem} remaining` : `${Math.abs(rem)} over limit`;
@@ -796,14 +695,14 @@ function showProjection(ds) {
   document.getElementById('proj-window').textContent = `Window: ${fmtDate(ws)} → ${fmtDate(ds)}`;
 }
 
-function clearProjection() {
+document.getElementById('proj-close').addEventListener('click', () => {
   if (selectedDate) {
     const prev = document.querySelector(`.day[data-date="${selectedDate}"]`);
     if (prev) prev.classList.remove('selected');
     selectedDate = null;
   }
   document.getElementById('proj-bar').style.display = 'none';
-}
+});
 
 // ═══════════════════════════════════════════════════
 // TOOLTIP
@@ -814,24 +713,165 @@ const tip = document.getElementById('tooltip');
 function showTip(e, ds) {
   const inS = schengen.has(ds);
   const today = todayStr();
-  const isFuture = ds > today;
-  const status = inS ? '🟢' : '⚪';
   const { count } = countAsOf(ds);
   const rem = 90 - count;
-  const remTxt = rem >= 0 ? `${rem} left` : `${Math.abs(rem)} over`;
-  const futureNote = isFuture ? ' · planned' : '';
-  tip.textContent = `${fmtDate(ds)} · ${status}${futureNote} · ${count}/90 days as of here (${remTxt})`;
+  const status = inS ? '🟢' : '⚪';
+  const future = ds > today ? ' · planned' : '';
+  const nextExpiry = findNextExpiry();
+  const expiryNote = ds === nextExpiry ? ' · ⬥ next expiry' : '';
+  tip.textContent = `${fmtDate(ds)} · ${status}${future}${expiryNote} · ${count}/90 (${rem >= 0 ? rem + ' left' : Math.abs(rem) + ' over'})`;
   tip.style.opacity = '1';
   moveTip(e);
 }
-
 function moveTip(e) {
-  tip.style.left = (e.clientX + 12) + 'px';
-  tip.style.top  = (e.clientY - 28) + 'px';
+  tip.style.left = (e.clientX + 14) + 'px';
+  tip.style.top  = (e.clientY - 30) + 'px';
+}
+function hideTip() { tip.style.opacity = '0'; }
+
+// ═══════════════════════════════════════════════════
+// MODAL HELPERS
+// ═══════════════════════════════════════════════════
+
+function openModal(id)  { document.getElementById(id).classList.add('visible'); }
+function closeModal(id) { document.getElementById(id).classList.remove('visible'); }
+
+// ═══════════════════════════════════════════════════
+// GITHUB TOKEN
+// ═══════════════════════════════════════════════════
+
+function getToken() { return localStorage.getItem('gh_token') || ''; }
+function setToken(t) { localStorage.setItem('gh_token', t); }
+
+function clearToken() {
+  localStorage.removeItem('gh_token');
+  closeModal('token-modal');
 }
 
-function hideTip() {
-  tip.style.opacity = '0';
+function openSyncFlow() {
+  const token = getToken();
+  if (!token) {
+    document.getElementById('clear-token-btn').style.display = 'none';
+    document.getElementById('token-input').value = '';
+    openModal('token-modal');
+  } else {
+    runSync(token);
+  }
+}
+
+function saveTokenAndSync() {
+  const val = document.getElementById('token-input').value.trim();
+  if (!val) return;
+  setToken(val);
+  closeModal('token-modal');
+  runSync(val);
+}
+
+// ═══════════════════════════════════════════════════
+// SYNC TO GITHUB
+// ═══════════════════════════════════════════════════
+
+function generateDataFile() {
+  const today = todayStr();
+  const ranges = datesToRanges([...schengen]);
+  const lines = ranges.map(r => `  { start: "${r.start}", end: "${r.end}" }`).join(',\n');
+  return `// Schengen visit data\n// Last synced: ${today}\n// Edit manually or use the Sync button in the tracker UI\nwindow.SCHENGEN_DATA = {\n  version: 1,\n  ranges: [\n${lines}\n  ]\n};\n`;
+}
+
+async function runSync(token) {
+  // Show spinner
+  document.getElementById('sync-content').innerHTML = `
+    <div class="spinner"></div>
+    <div class="sync-message">Creating PR…</div>
+    <div class="sync-sub">Pushing changes to GitHub.</div>`;
+  document.getElementById('sync-actions').style.display = 'none';
+  openModal('sync-modal');
+
+  try {
+    const api = (path, method, body) =>
+      fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}${path}`, {
+        method: method || 'GET',
+        headers: {
+          'Authorization': `token ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/vnd.github+json'
+        },
+        body: body ? JSON.stringify(body) : undefined
+      }).then(r => r.json());
+
+    // Get current file SHA
+    const file = await api(`/contents/${GITHUB_FILE}`);
+    if (!file.sha) throw new Error(file.message || 'Could not fetch current data file');
+
+    // Get main branch SHA
+    const mainRef = await api(`/git/refs/heads/main`);
+    if (!mainRef.object?.sha) throw new Error('Could not get main branch ref');
+
+    // Create branch with unique name
+    const branchName = `update/schengen-${todayStr()}-${Date.now()}`;
+    await api(`/git/refs`, 'POST', {
+      ref: `refs/heads/${branchName}`,
+      sha: mainRef.object.sha
+    });
+
+    // Update file on branch
+    const content = generateDataFile();
+    const encoded = btoa(unescape(encodeURIComponent(content)));
+    const updateResult = await api(`/contents/${GITHUB_FILE}`, 'PUT', {
+      message: `Update Schengen data (${todayStr()})`,
+      content: encoded,
+      sha: file.sha,
+      branch: branchName
+    });
+    if (!updateResult.content) throw new Error(updateResult.message || 'File update failed');
+
+    // Create PR
+    const pr = await api(`/pulls`, 'POST', {
+      title: `Update Schengen data (${todayStr()})`,
+      body: `Synced from Schengen tracker browser app.\n\nThis PR merges browser-side calendar changes back into \`${GITHUB_FILE}\`.`,
+      head: branchName,
+      base: 'main'
+    });
+    if (!pr.html_url) throw new Error(pr.message || 'PR creation failed');
+
+    // Success
+    document.getElementById('sync-content').innerHTML = `
+      <div class="sync-icon">✅</div>
+      <div class="sync-message">PR Created</div>
+      <div class="sync-sub">
+        <a href="${pr.html_url}" target="_blank">${pr.html_url}</a><br><br>
+        Review and merge on GitHub. Then clear local overrides below to keep things in sync.
+      </div>`;
+    document.getElementById('sync-actions').style.display = '';
+    document.getElementById('clear-overrides-btn').style.display = '';
+
+  } catch (err) {
+    document.getElementById('sync-content').innerHTML = `
+      <div class="sync-icon">❌</div>
+      <div class="sync-message">Sync Failed</div>
+      <div class="sync-sub">${err.message}</div>`;
+    document.getElementById('sync-actions').style.display = '';
+    document.getElementById('clear-overrides-btn').style.display = 'none';
+  }
+}
+
+function clearOverrides() {
+  overrides = {};
+  try { localStorage.removeItem('schengen_overrides'); } catch(e) {}
+  // Rebuild schengen set from default
+  schengen.clear();
+  DEFAULT_SCHENGEN.forEach(d => schengen.add(d));
+  updateSyncIndicator();
+  updateHeader();
+  closeModal('sync-modal');
+  // Refresh all cells
+  const today = todayStr();
+  const ws = windowStartFor(today);
+  const ne = findNextExpiry();
+  document.querySelectorAll('.day[data-date]').forEach(cell => {
+    applyCellClass(cell, cell.dataset.date, today, ws, ne);
+  });
+  document.querySelectorAll('.month-card').forEach(c => updateMonthCount(c));
 }
 
 // ═══════════════════════════════════════════════════
@@ -840,29 +880,30 @@ function hideTip() {
 
 buildCalendar();
 updateHeader();
+updateSyncIndicator();
 
-// Wire up projection close button
-document.getElementById('proj-close').addEventListener('click', clearProjection);
+// Show "clear token" in modal if token already set
+document.getElementById('token-modal').addEventListener('click', () => {
+  if (getToken()) document.getElementById('clear-token-btn').style.display = '';
+});
 
-// Scroll to current year
+// Scroll to 2025/2026
 (function() {
-  const today = todayStr();
-  const year = today.slice(0,4);
-  const sections = document.querySelectorAll('.year-section');
-  sections.forEach(s => {
-    if (s.querySelector('.year-label') && s.querySelector('.year-label').textContent === year) {
-      setTimeout(() => s.scrollIntoView({behavior:'smooth', block:'start'}), 300);
+  const year = todayStr().slice(0, 4);
+  const labels = document.querySelectorAll('.year-label');
+  labels.forEach(l => {
+    if (l.textContent === String(parseInt(year) - 1)) {
+      setTimeout(() => l.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
     }
   });
 })();
 
 // Midnight refresh
-function scheduleMidnight() {
+(function() {
   const now = new Date();
-  const midnight = new Date(now); midnight.setHours(24,0,1,0);
-  setTimeout(() => { location.reload(); }, midnight - now);
-}
-scheduleMidnight();
+  const midnight = new Date(now); midnight.setHours(24, 0, 1, 0);
+  setTimeout(() => location.reload(), midnight - now);
+})();
 </script>
 </body>
 </html>
