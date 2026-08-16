@@ -62,6 +62,7 @@ body {
 
 /* Sync button area */
 .sync-area { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; margin-left: auto; }
+.sync-btn-row { display: flex; gap: 8px; align-items: center; }
 .sync-btn {
   display: flex; align-items: center; gap: 7px;
   background: #1e2235; border: 1px solid #2d3358; color: #aaa;
@@ -282,15 +283,24 @@ body {
     </div>
 
     <div class="sync-area">
-      <button class="sync-btn" id="sync-btn" onclick="openSyncFlow()">
-        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8">
-          <path d="M13.5 8A5.5 5.5 0 1 1 8 2.5" stroke-linecap="round"/>
-          <path d="M8 1l2.5 2L8 5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        Sync to GitHub
-        <span class="pending-badge" id="pending-badge" style="display:none">0</span>
-      </button>
-      <div class="sync-hint" id="sync-hint">↑ creates a PR to update schengen_data.js</div>
+      <div class="sync-btn-row">
+        <button class="sync-btn" id="pull-btn" onclick="pullFromGitHub()" title="Fetch latest schengen_data.js from GitHub main branch">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M8 2v9M4.5 7.5L8 11l3.5-3.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2.5 13.5h11" stroke-linecap="round"/>
+          </svg>
+          Pull
+        </button>
+        <button class="sync-btn" id="sync-btn" onclick="openSyncFlow()">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M13.5 8A5.5 5.5 0 1 1 8 2.5" stroke-linecap="round"/>
+            <path d="M8 1l2.5 2L8 5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Sync to GitHub
+          <span class="pending-badge" id="pending-badge" style="display:none">0</span>
+        </button>
+      </div>
+      <div class="sync-hint">Pull: load latest from GitHub · Sync: push changes as PR</div>
     </div>
   </div>
 
@@ -765,6 +775,65 @@ function saveTokenAndSync() {
   setToken(val);
   closeModal('token-modal');
   runSync(val);
+}
+
+// ═══════════════════════════════════════════════════
+// PULL FROM GITHUB
+// ═══════════════════════════════════════════════════
+
+async function pullFromGitHub() {
+  const btn = document.getElementById('pull-btn');
+  const origHTML = btn.innerHTML;
+  btn.textContent = 'Pulling…';
+  btn.disabled = true;
+
+  try {
+    // Public repo — no token needed. Cache-bust so we get the latest.
+    const url = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/main/${GITHUB_FILE}?t=${Date.now()}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status} — could not fetch ${GITHUB_FILE}`);
+    const content = await res.text();
+
+    const newRanges = parseRangesFromFile(content);
+    if (!newRanges) throw new Error('Could not parse ranges from fetched file');
+
+    // Replace DEFAULT_SCHENGEN with fetched data
+    DEFAULT_SCHENGEN.clear();
+    for (const r of newRanges) {
+      for (const d of dr(r.start, r.end)) DEFAULT_SCHENGEN.add(d);
+    }
+
+    // Clear local overrides — they're now in the canonical file
+    overrides = {};
+    try { localStorage.removeItem('schengen_overrides'); } catch(e) {}
+
+    // Rebuild live set
+    schengen.clear();
+    DEFAULT_SCHENGEN.forEach(d => schengen.add(d));
+
+    // Refresh UI
+    const today = todayStr();
+    const ws    = windowStartFor(today);
+    const ne    = findNextExpiry();
+    document.querySelectorAll('.day[data-date]').forEach(cell =>
+      applyCellClass(cell, cell.dataset.date, today, ws, ne));
+    document.querySelectorAll('.month-card').forEach(c => updateMonthCount(c));
+    updateHeader();
+    updateSyncIndicator();
+
+    btn.textContent = '✓ Up to date';
+    setTimeout(() => { btn.innerHTML = origHTML; btn.disabled = false; }, 2500);
+
+  } catch (err) {
+    btn.innerHTML = origHTML;
+    btn.disabled = false;
+    // Show error in a small inline way rather than blocking modal
+    const hint = document.querySelector('.sync-hint');
+    const prev = hint.textContent;
+    hint.style.color = '#f87171';
+    hint.textContent = `Pull failed: ${err.message}`;
+    setTimeout(() => { hint.style.color = ''; hint.textContent = prev; }, 4000);
+  }
 }
 
 // ═══════════════════════════════════════════════════
