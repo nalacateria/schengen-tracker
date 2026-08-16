@@ -768,22 +768,85 @@ function saveTokenAndSync() {
 }
 
 // ═══════════════════════════════════════════════════
-// SYNC TO GITHUB
+// SYNC TO GITHUB — minimal diff
 // ═══════════════════════════════════════════════════
 
-function generateDataFile() {
+// Parse range entries from the raw JS file content
+function parseRangesFromFile(content) {
+  const re = /\{\s*start:\s*"(\d{4}-\d{2}-\d{2})",\s*end:\s*"(\d{4}-\d{2}-\d{2})"\s*\}/g;
+  const out = [];
+  let m;
+  while ((m = re.exec(content)) !== null) out.push({ start: m[1], end: m[2] });
+  return out.length ? out : null;
+}
+
+// Rebuild the file, keeping every unchanged range line byte-for-byte identical.
+// Only lines for added/removed/modified ranges differ from the original,
+// so the git diff in the PR touches only those lines.
+function buildMinimalFileContent(originalContent, originalRanges, newRanges) {
+  const lines = originalContent.split('\n');
+
+  // Find all range entry line indices
+  const rangeLineRE = /^(\s*)\{\s*start:\s*"(\d{4}-\d{2}-\d{2})",\s*end:\s*"(\d{4}-\d{2}-\d{2})"\s*\},?\s*$/;
+  const rangeLineIdxs = lines.reduce((acc, l, i) => (rangeLineRE.test(l) ? [...acc, i] : acc), []);
+  if (!rangeLineIdxs.length) return null;
+
+  const firstIdx = rangeLineIdxs[0];
+  const lastIdx  = rangeLineIdxs[rangeLineIdxs.length - 1];
+
+  // Map "start:end" → original line WITHOUT trailing comma (preserves exact spacing)
+  const origLineMap = new Map();
+  rangeLineIdxs.forEach(i => {
+    const m = lines[i].match(rangeLineRE);
+    if (m) origLineMap.set(`${m[2]}:${m[3]}`, lines[i].replace(/,\s*$/, ''));
+  });
+
+  // Detect indent from first range line
+  const indentM = lines[firstIdx].match(/^(\s*)/);
+  const indent = indentM ? indentM[1] : '    ';
+
+  // Build output range lines — reuse original text verbatim where unchanged
+  const newRangeLines = newRanges.map((r, i) => {
+    const key = `${r.start}:${r.end}`;
+    const suffix = i < newRanges.length - 1 ? ',' : '';
+    const base = origLineMap.has(key)
+      ? origLineMap.get(key)
+      : `${indent}{ start: "${r.start}", end: "${r.end}" }`;
+    return base + suffix;
+  });
+
+  // Update "Last synced" comment if present
   const today = todayStr();
-  const ranges = datesToRanges([...schengen]);
-  const lines = ranges.map(r => `  { start: "${r.start}", end: "${r.end}" }`).join(',\n');
-  return `// Schengen visit data\n// Last synced: ${today}\n// Edit manually or use the Sync button in the tracker UI\nwindow.SCHENGEN_DATA = {\n  version: 1,\n  ranges: [\n${lines}\n  ]\n};\n`;
+  const newLines = lines.map(l => /^\/\/ Last synced:/.test(l) ? `// Last synced: ${today}` : l);
+
+  return [...newLines.slice(0, firstIdx), ...newRangeLines, ...newLines.slice(lastIdx + 1)].join('\n');
+}
+
+// Human-readable change summary for the PR body
+function buildPRBody(originalRanges, newRanges) {
+  const origKeys = new Set(originalRanges.map(r => `${r.start}:${r.end}`));
+  const newKeys  = new Set(newRanges.map(r => `${r.start}:${r.end}`));
+  const added    = newRanges.filter(r => !origKeys.has(`${r.start}:${r.end}`));
+  const removed  = originalRanges.filter(r => !newKeys.has(`${r.start}:${r.end}`));
+
+  const lines = ['Synced from Schengen tracker browser app.\n'];
+  if (added.length) {
+    lines.push('**Added ranges:**');
+    added.forEach(r => lines.push(`- \`${r.start}\` → \`${r.end}\``));
+  }
+  if (removed.length) {
+    lines.push('\n**Removed ranges:**');
+    removed.forEach(r => lines.push(`- \`${r.start}\` → \`${r.end}\``));
+  }
+  lines.push('\nOnly the affected lines in `schengen_data.js` were modified.');
+  return lines.join('\n');
 }
 
 async function runSync(token) {
-  // Show spinner
   document.getElementById('sync-content').innerHTML = `
     <div class="spinner"></div>
     <div class="sync-message">Creating PR…</div>
-    <div class="sync-sub">Pushing changes to GitHub.</div>`;
+    <div class="sync-sub">Fetching current file and computing diff.</div>`;
   document.getElementById('sync-actions').style.display = 'none';
   openModal('sync-modal');
 
@@ -799,24 +862,38 @@ async function runSync(token) {
         body: body ? JSON.stringify(body) : undefined
       }).then(r => r.json());
 
-    // Get current file SHA
+    // ── 1. Fetch current file (need SHA + content) ──
     const file = await api(`/contents/${GITHUB_FILE}`);
     if (!file.sha) throw new Error(file.message || 'Could not fetch current data file');
 
-    // Get main branch SHA
+    const originalContent = decodeURIComponent(escape(atob(file.content.replace(/\s/g, ''))));
+    const originalRanges  = parseRangesFromFile(originalContent);
+    if (!originalRanges)  throw new Error('Could not parse ranges from data file');
+
+    // ── 2. Compute minimal new file content ──
+    const newRanges  = datesToRanges([...schengen]);
+    const newContent = buildMinimalFileContent(originalContent, originalRanges, newRanges);
+    if (!newContent) throw new Error('Could not compute file changes');
+
+    if (newContent === originalContent) {
+      document.getElementById('sync-content').innerHTML = `
+        <div class="sync-icon">✅</div>
+        <div class="sync-message">Nothing to sync</div>
+        <div class="sync-sub">The data file already matches your current calendar state.</div>`;
+      document.getElementById('sync-actions').style.display = '';
+      document.getElementById('clear-overrides-btn').style.display = 'none';
+      return;
+    }
+
+    // ── 3. Create branch ──
     const mainRef = await api(`/git/refs/heads/main`);
     if (!mainRef.object?.sha) throw new Error('Could not get main branch ref');
 
-    // Create branch with unique name
     const branchName = `update/schengen-${todayStr()}-${Date.now()}`;
-    await api(`/git/refs`, 'POST', {
-      ref: `refs/heads/${branchName}`,
-      sha: mainRef.object.sha
-    });
+    await api(`/git/refs`, 'POST', { ref: `refs/heads/${branchName}`, sha: mainRef.object.sha });
 
-    // Update file on branch
-    const content = generateDataFile();
-    const encoded = btoa(unescape(encodeURIComponent(content)));
+    // ── 4. Commit only the changed lines ──
+    const encoded = btoa(unescape(encodeURIComponent(newContent)));
     const updateResult = await api(`/contents/${GITHUB_FILE}`, 'PUT', {
       message: `Update Schengen data (${todayStr()})`,
       content: encoded,
@@ -825,22 +902,21 @@ async function runSync(token) {
     });
     if (!updateResult.content) throw new Error(updateResult.message || 'File update failed');
 
-    // Create PR
+    // ── 5. Open PR ──
     const pr = await api(`/pulls`, 'POST', {
       title: `Update Schengen data (${todayStr()})`,
-      body: `Synced from Schengen tracker browser app.\n\nThis PR merges browser-side calendar changes back into \`${GITHUB_FILE}\`.`,
+      body: buildPRBody(originalRanges, newRanges),
       head: branchName,
       base: 'main'
     });
     if (!pr.html_url) throw new Error(pr.message || 'PR creation failed');
 
-    // Success
     document.getElementById('sync-content').innerHTML = `
       <div class="sync-icon">✅</div>
       <div class="sync-message">PR Created</div>
       <div class="sync-sub">
         <a href="${pr.html_url}" target="_blank">${pr.html_url}</a><br><br>
-        Review and merge on GitHub. Then clear local overrides below to keep things in sync.
+        Review and merge on GitHub. Then hit "Clear local overrides" below to stay in sync.
       </div>`;
     document.getElementById('sync-actions').style.display = '';
     document.getElementById('clear-overrides-btn').style.display = '';
